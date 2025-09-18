@@ -1,45 +1,59 @@
+# SPDX-License-Identifier: GPL-2.0-only
+################################################################################
 #
-# Download realtek r8127 linux driver from official site:
-# https://www.realtek.com/Download/List?cate_id=584
+# r8127 is the Linux device driver released for Realtek 10 Gigabit Ethernet
+# controllers with PCI-Express interface.
 #
+# Copyright(c) 2025 Realtek Semiconductor Corp. All rights reserved.
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the Free
+# Software Foundation; either version 2 of the License, or (at your option)
+# any later version.
+#
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
+# more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# this program; if not, see <http://www.gnu.org/licenses/>.
+#
+# Author:
+# Realtek NIC software team <nicfae@realtek.com>
+# No. 2, Innovation Road II, Hsinchu Science Park, Hsinchu 300, Taiwan
+#
+################################################################################
 
-include $(TOPDIR)/rules.mk
-include $(INCLUDE_DIR)/kernel.mk
+################################################################################
+#  This product is covered by one or more of the following patents:
+#  US6,570,884, US6,115,776, and US6,327,625.
+################################################################################
 
-PKG_NAME:=r8127
-PKG_VERSION:=11.015.00
-PKG_RELEASE:=1
+KFLAG := 2$(shell uname -r | sed -ne 's/^2\.[4]\..*/4/p')x
 
-PKG_BUILD_PARALLEL:=1
-PKG_LICENSE:=GPLv2
+all: clean modules install
 
-PKG_BUILD_DIR:=$(KERNEL_BUILD_DIR)/$(PKG_NAME)-$(PKG_VERSION)
+modules:
+ifeq ($(KFLAG),24x)
+	$(MAKE) -C src/ -f Makefile_linux24x modules
+else
+	$(MAKE) -C src/ modules
+endif
 
-include $(INCLUDE_DIR)/package.mk
+clean:
+ifeq ($(KFLAG),24x)
+	$(MAKE) -C src/ -f Makefile_linux24x clean
+else
+	$(MAKE) -C src/ clean
+endif
 
-define KernelPackage/r8127
-  TITLE:=Realtek RTL8127 PCI 10 Gigabit Ethernet driver
-  SUBMENU:=Network Devices
-  DEPENDS:=@PCI_SUPPORT +kmod-libphy
-  FILES:= $(PKG_BUILD_DIR)/r8127.ko
-  AUTOLOAD:=$(call AutoProbe,r8127)
-  PROVIDES:=kmod-r8169
-endef
+install:
+ifeq ($(KFLAG),24x)
+	$(MAKE) -C src/ -f Makefile_linux24x install
+else
+	$(MAKE) -C src/ install
+endif
 
-define Package/r8127/description
-  This package contains a driver for Realtek r8127 chipsets.
-endef
 
-PKG_MAKE_FLAGS += \
-	CONFIG_ASPM=n \
-	ENABLE_RSS_SUPPORT=y \
-	ENABLE_MULTIPLE_TX_QUEUE=y
 
-define Build/Compile
-	+$(KERNEL_MAKE) $(PKG_JOBS) \
-		$(PKG_MAKE_FLAGS) \
-		M=$(PKG_BUILD_DIR) \
-		modules
-endef
-
-$(eval $(call KernelPackage,r8127))
