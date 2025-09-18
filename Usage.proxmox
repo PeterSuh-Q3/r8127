@@ -1,0 +1,6 @@
+apt install pve-headers-$(uname -r)
+apt install build-essential -y
+
+git clone https://github.com/PeterSuh-Q3/r8127.git
+cd r8127
+./autorun.sh
